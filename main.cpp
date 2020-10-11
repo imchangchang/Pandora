@@ -26,37 +26,11 @@ int main(void) {
   SystemClock_Config();
 
   while (1) {
-    LedState R, G, B;
-
-    HAL_Delay(1000);
-    R = LedState::OFF;
-    G = LedState::OFF;
-    B = LedState::OFF;
-    myRgb.Write(R, G, B);
-
-    HAL_Delay(1000);
-    R = LedState::ON;
-    G = LedState::ON;
-    B = LedState::OFF;
-    myRgb.Write(R, G, B);
-
-    HAL_Delay(1000);
-    R = LedState::OFF;
-    G = LedState::ON;
-    B = LedState::ON;
-    myRgb.Write(R, G, B);
-
-    HAL_Delay(1000);
-    R = LedState::ON;
-    G = LedState::OFF;
-    B = LedState::ON;
-    myRgb.Write(R, G, B);
-
-    HAL_Delay(1000);
-    R = LedState::ON;
-    G = LedState::ON;
-    B = LedState::ON;
-    myRgb.Write(R, G, B);
+    for (uint32_t color = (uint32_t)LedColor::OFF;
+         color <= (uint32_t)LedColor::WHITE; color++) {
+      HAL_Delay(300);
+      myRgb.Write(static_cast<LedColor>(color));
+    }
   }
   return 0;
 }

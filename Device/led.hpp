@@ -24,13 +24,30 @@ class Led {
   Gpio &_gpio;
 };
 
+enum class LedColor {
+  OFF,
+  RED,
+  GREEN,
+  BLUE,
+  YELLOW,
+  CYAN,  // Light blue
+  MAGENTA,
+  WHITE,
+};
+
 class LedRgb {
+  static LedState LEDRGBTABLE[][3];
+
  public:
   LedRgb(Led &R, Led &G, Led &B) : _R(R), _G(G), _B(B) {}
   void Write(LedState R, LedState G, LedState B) {
     _R.Write(R);
     _G.Write(G);
     _B.Write(B);
+  }
+  void Write(LedColor color) {
+    uint32_t idx = static_cast<uint32_t>(color);
+    Write(LEDRGBTABLE[idx][0], LEDRGBTABLE[idx][1], LEDRGBTABLE[idx][2]);
   }
 
  private:

@@ -16,17 +16,17 @@ enum class GpioMode {
 };
 class Gpio {
  public:
-  Gpio(GPIO_TypeDef* GPIOx, uint16_t Pin, uint32_t Mode, uint32_t Pull,
+  Gpio(GPIO_TypeDef* GPIOx, uint32_t Pin, uint32_t Mode, uint32_t Pull,
        uint32_t Speed)
       : _GPIOx(GPIOx), _GPIO_Pin(Pin) {
+    InitClock(GPIOx);
+
     GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin = GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
+    GPIO_InitStruct.Pin = Pin;
     GPIO_InitStruct.Mode = Mode;
     GPIO_InitStruct.Pull = Pull;
     GPIO_InitStruct.Speed = Speed;
-    HAL_GPIO_Init(_GPIOx, &GPIO_InitStruct);
-
-    InitClock(_GPIOx);
+    HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
   }
   ~Gpio() { HAL_GPIO_DeInit(_GPIOx, _GPIO_Pin); }
   GPIO_PinState ReadPin() { return HAL_GPIO_ReadPin(_GPIOx, _GPIO_Pin); }
@@ -38,7 +38,7 @@ class Gpio {
 
  private:
   GPIO_TypeDef* _GPIOx;
-  const uint16_t _GPIO_Pin;
+  uint32_t _GPIO_Pin;
   void InitClock(GPIO_TypeDef* GPIOx) {
     switch ((uint32_t)GPIOx) {
       case (uint32_t)GPIOA_BASE:
