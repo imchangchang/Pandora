@@ -15,10 +15,10 @@ Gpio GpioG(GPIOE, GPIO_PIN_8, GPIO_MODE_OUTPUT_PP, GPIO_PULLUP,
            GPIO_SPEED_FREQ_LOW);
 Gpio GpioB(GPIOE, GPIO_PIN_9, GPIO_MODE_OUTPUT_PP, GPIO_PULLUP,
            GPIO_SPEED_FREQ_LOW);
-
 Led LedR(GpioR);
 Led LedG(GpioG);
 Led LedB(GpioB);
+LedRgb myRgb(LedR, LedG, LedB);
 
 Gpio GpioKey0(GPIOD, GPIO_PIN_10, GPIO_MODE_INPUT, GPIO_NOPULL,
               GPIO_SPEED_FREQ_HIGH);
@@ -38,17 +38,24 @@ Gpio GpioBeep(GPIOB, GPIO_PIN_2, GPIO_MODE_OUTPUT_PP, GPIO_PULLDOWN,
               GPIO_SPEED_FREQ_LOW);
 Beep myBeep(GpioBeep);
 
-LedRgb myRgb(LedR, LedG, LedB);
-
 extern "C" void SystemClock_Config(void);
 
-void update(uint32_t time_ms) {
+static void update(uint32_t time_ms) {
   Key0.scan(time_ms);
   Key1.scan(time_ms);
   Key2.scan(time_ms);
   KeyWKUP.scan(time_ms);
   myBeep.run(time_ms);
 }
+
+static void beep_on_key_pressed() {
+  constexpr uint32_t BEEP_TIME_MS = 100;
+  if (Key0.event_pressed() || Key1.event_pressed() || Key2.event_pressed() ||
+      KeyWKUP.event_pressed()) {
+    myBeep.on(BEEP_TIME_MS);
+  }
+}
+
 int main(void) {
   HAL_Init();
   SystemClock_Config();
@@ -57,12 +64,7 @@ int main(void) {
     uint32_t time_ms = HAL_GetTick();
     update(time_ms);
 
-    if (Key0.event_pressed()) {
-      myBeep.on(100);
-    }
-    if (Key1.event_release()) {
-      myBeep.on(100);
-    }
+    beep_on_key_pressed();
 
     if (Key0.pressed()) {
       myRgb.Write(LedColor::BLUE);
