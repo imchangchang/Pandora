@@ -9,6 +9,7 @@
 #define DEVICE_BUTTON_HPP_
 
 #include "gpio.hpp"
+#include "timer.hpp"
 
 class Button {
  public:

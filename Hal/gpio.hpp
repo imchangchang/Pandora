@@ -28,6 +28,19 @@ class Gpio {
     GPIO_InitStruct.Speed = Speed;
     HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
   }
+  Gpio(GPIO_TypeDef* GPIOx, uint32_t Pin, uint32_t Mode, uint32_t Pull,
+       uint32_t Speed, uint32_t Alternate)
+      : _GPIOx(GPIOx), _GPIO_Pin(Pin) {
+    InitClock(GPIOx);
+
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitStruct.Pin = Pin;
+    GPIO_InitStruct.Mode = Mode;
+    GPIO_InitStruct.Pull = Pull;
+    GPIO_InitStruct.Speed = Speed;
+    GPIO_InitStruct.Alternate = Alternate;
+    HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
+  }
   ~Gpio() { HAL_GPIO_DeInit(_GPIOx, _GPIO_Pin); }
   GPIO_PinState ReadPin() { return HAL_GPIO_ReadPin(_GPIOx, _GPIO_Pin); }
   void WritePin(GPIO_PinState PinState) {
