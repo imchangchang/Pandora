@@ -30,24 +30,20 @@ class RingBuffer {
   uint8_t pop() {
     uint8_t res = 0;
     if (!isEmpty()) {
-      res = buf[++tail];
-      tail %= SIZE;
+      tail = (tail + 1) % SIZE;
+      res = buf[tail];
     }
     return res;
   }
   bool isEmpty() { return head == (tail + 1) % SIZE; }
-  bool isFull() { return (head) % SIZE == tail; }
+  bool isFull() { return head == tail; }
   uint32_t size() {
-    if (isEmpty())
-      return _SIZE;
-    else if (isFull())
-      return 0;
-    else {
-      if (head > tail)
-        return head - tail - 1;
-      else
-        return tail - head - 1;
-    }
+    if (isFull()) return _SIZE;
+    if (isEmpty()) return 0;
+    if (head > tail)
+      return head - tail - 1;
+    else
+      return _SIZE - tail + head;
   }
   uint8_t operator[](int idx) { return buf[idx]; }
   uint8_t getHead() { return head; }
@@ -81,11 +77,12 @@ class Uart {
     // start uart
     USART1->CR1 |= USART_CR1_UE;
   }
-  void Run(uint32_t time_ms) {
-    static uint32_t last_time_ms = 0;
-    if (time_ms - last_time_ms > 1000) {
-      last_time_ms = time_ms;
-      // send a byte to pc
+  void Run() {
+    checkReceiver();
+    asyncSend();
+
+    while (!recvbuf.isEmpty()) {
+      sendbuf.append(recvbuf.pop());
     }
   }
   void syncSend(uint8_t a) {
@@ -98,8 +95,6 @@ class Uart {
       if (!sendbuf.isEmpty()) USART1->TDR = sendbuf.pop();
     }
   }
-  void sendhandle() { asyncSend(); }
-
   void print(char *t, ...) {
     char buf[100] = {0};
     va_list st;
@@ -113,7 +108,13 @@ class Uart {
 
  private:
   Gpio Rx, Tx;
-  RingBuffer<1000> sendbuf;
+  RingBuffer<500> sendbuf;
+  RingBuffer<500> recvbuf;
+  void checkReceiver() {
+    if ((USART1->ISR & USART_ISR_RXNE) != 0) {
+      recvbuf.append((USART1->RDR));
+    }
+  }
 };
 
 #endif /* HAL_UART_HPP_ */

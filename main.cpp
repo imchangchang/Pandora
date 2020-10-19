@@ -18,7 +18,6 @@ static void update(uint32_t time_ms) {
   Key2.scan(time_ms);
   KeyWKUP.scan(time_ms);
   myBeep.run(time_ms);
-  uart1.Run(time_ms);
 }
 
 static void beep_on_key_pressed() {
@@ -39,7 +38,7 @@ int main(void) {
     timer.exec();
     uint32_t time_ms = HAL_GetTick();
     update(time_ms);
-    uart1.sendhandle();
+    uart1.Run();
 
     beep_on_key_pressed();
 
