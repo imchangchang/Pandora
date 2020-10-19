@@ -31,6 +31,7 @@ static void beep_on_key_pressed() {
 }
 
 int main(void) {
+  RingBuffer<20> testBuffer;
   HAL_Init();
   SystemClock_Config();
 
@@ -38,6 +39,7 @@ int main(void) {
     timer.exec();
     uint32_t time_ms = HAL_GetTick();
     update(time_ms);
+    uart1.sendhandle();
 
     beep_on_key_pressed();
 

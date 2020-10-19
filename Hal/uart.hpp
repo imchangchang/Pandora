@@ -10,8 +10,55 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "gpio.hpp"
+template <uint32_t _SIZE>
+class RingBuffer {
+ public:
+  RingBuffer() {
+    head = 1;
+    tail = 0;
+    memset(buf, 0, sizeof(buf));
+  }
+  void append(uint8_t data) {
+    if (!isFull()) {
+      buf[head++] = data;
+      head %= SIZE;
+    }
+  }
+  uint8_t pop() {
+    uint8_t res = 0;
+    if (!isEmpty()) {
+      res = buf[++tail];
+      tail %= SIZE;
+    }
+    return res;
+  }
+  bool isEmpty() { return head == (tail + 1) % SIZE; }
+  bool isFull() { return (head) % SIZE == tail; }
+  uint32_t size() {
+    if (isEmpty())
+      return _SIZE;
+    else if (isFull())
+      return 0;
+    else {
+      if (head > tail)
+        return head - tail - 1;
+      else
+        return tail - head - 1;
+    }
+  }
+  uint8_t operator[](int idx) { return buf[idx]; }
+  uint8_t getHead() { return head; }
+  uint8_t getTail() { return tail; }
+
+ private:
+  static constexpr uint32_t SIZE = _SIZE + 1;
+  uint8_t buf[SIZE];
+  uint32_t head;
+  uint32_t tail;
+};
 
 class Uart {
  public:
@@ -41,24 +88,32 @@ class Uart {
       // send a byte to pc
     }
   }
-  void Send(uint8_t a) {
+  void syncSend(uint8_t a) {
     while ((USART1->ISR & USART_ISR_TXE) == 0)
       ;
     USART1->TDR = a;
   }
+  void asyncSend() {
+    if ((USART1->ISR & USART_ISR_TXE) != 0) {
+      if (!sendbuf.isEmpty()) USART1->TDR = sendbuf.pop();
+    }
+  }
+  void sendhandle() { asyncSend(); }
+
   void print(char *t, ...) {
     char buf[100] = {0};
     va_list st;
     va_start(st, t);
     int len = vsprintf(buf, t, st);
     for (int i = 0; i < len; i++) {
-      Send(buf[i]);
+      sendbuf.append(buf[i]);
     }
     va_end(st);
   }
 
  private:
   Gpio Rx, Tx;
+  RingBuffer<1000> sendbuf;
 };
 
 #endif /* HAL_UART_HPP_ */
