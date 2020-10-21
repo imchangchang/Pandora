@@ -73,16 +73,20 @@ class Uart {
     //
     USART1->BRR = 80000000u / 115200u;
 
+    // set interrupt
+    //    USART1->CR1 |= USART_CR1_TXEIE;  //
+    USART1->CR1 |= USART_CR1_RXNEIE;
+    HAL_NVIC_SetPriority(USART1_IRQn, 10, 0);
+    HAL_NVIC_EnableIRQ(USART1_IRQn);
+
     // KEEP UE at end of uart configuration
     // start uart
     USART1->CR1 |= USART_CR1_UE;
   }
   void Run() {
-    checkReceiver();
-    asyncSend();
-
     while (!recvbuf.isEmpty()) {
       sendbuf.append(recvbuf.pop());
+      USART1->CR1 |= USART_CR1_TXEIE;
     }
   }
   void syncSend(uint8_t a) {
@@ -91,8 +95,9 @@ class Uart {
     USART1->TDR = a;
   }
   void asyncSend() {
-    if ((USART1->ISR & USART_ISR_TXE) != 0) {
+    if (cansend) {
       if (!sendbuf.isEmpty()) USART1->TDR = sendbuf.pop();
+      cansend = false;
     }
   }
   void print(char *t, ...) {
@@ -103,18 +108,20 @@ class Uart {
     for (int i = 0; i < len; i++) {
       sendbuf.append(buf[i]);
     }
+    USART1->CR1 |= USART_CR1_TXEIE;
     va_end(st);
   }
 
- private:
-  Gpio Rx, Tx;
-  RingBuffer<500> sendbuf;
-  RingBuffer<500> recvbuf;
   void checkReceiver() {
     if ((USART1->ISR & USART_ISR_RXNE) != 0) {
       recvbuf.append((USART1->RDR));
     }
   }
+
+  Gpio Rx, Tx;
+  RingBuffer<500> sendbuf;
+  RingBuffer<500> recvbuf;
+  bool cansend = false;
 };
 
 #endif /* HAL_UART_HPP_ */

@@ -6,12 +6,8 @@
  */
 #include "hardware.hpp"
 #include "stm32l4xx_hal.h"
-#include "timer.hpp"
-#include "uart.hpp"
 
 extern "C" void SystemClock_Config(void);
-Timer timer;
-Uart uart1;
 static void update(uint32_t time_ms) {
   Key0.scan(time_ms);
   Key1.scan(time_ms);
@@ -30,7 +26,6 @@ static void beep_on_key_pressed() {
 }
 
 int main(void) {
-  RingBuffer<20> testBuffer;
   HAL_Init();
   SystemClock_Config();
 

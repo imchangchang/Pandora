@@ -35,3 +35,6 @@ Button KeyWKUP(GpioKeyWKUP, GPIO_PIN_SET);
 Gpio GpioBeep(GPIOB, GPIO_PIN_2, GPIO_MODE_OUTPUT_PP, GPIO_PULLDOWN,
               GPIO_SPEED_FREQ_LOW);
 Beep myBeep(GpioBeep);
+
+Timer timer;
+Uart uart1;
