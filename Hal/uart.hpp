@@ -110,7 +110,7 @@ class Uart {
   }
 
   Gpio Rx, Tx;
-  RingBuffer<100> sendbuf;
+  RingBuffer<500> sendbuf;
   RingBuffer<500> recvbuf;
   bool cansend = false;
 };
