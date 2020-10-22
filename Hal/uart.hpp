@@ -73,31 +73,21 @@ class Uart {
     //
     USART1->BRR = 80000000u / 115200u;
 
-    // set interrupt
-    //    USART1->CR1 |= USART_CR1_TXEIE;  //
-    USART1->CR1 |= USART_CR1_RXNEIE;
-    HAL_NVIC_SetPriority(USART1_IRQn, 10, 0);
-    HAL_NVIC_EnableIRQ(USART1_IRQn);
-
     // KEEP UE at end of uart configuration
     // start uart
+    USART1->CR1 |= USART_CR1_TXEIE;  //
+    USART1->CR1 |= USART_CR1_RXNEIE;
     USART1->CR1 |= USART_CR1_UE;
+
+    // enable interrupt, must after staring uart
+    HAL_NVIC_SetPriority(USART1_IRQn, 10, 0);
+    HAL_NVIC_EnableIRQ(USART1_IRQn);
   }
   void Run() {
     while (!recvbuf.isEmpty()) {
+      USART1->CR1 &= ~(USART_CR1_TXEIE);
       sendbuf.append(recvbuf.pop());
       USART1->CR1 |= USART_CR1_TXEIE;
-    }
-  }
-  void syncSend(uint8_t a) {
-    while ((USART1->ISR & USART_ISR_TXE) == 0)
-      ;
-    USART1->TDR = a;
-  }
-  void asyncSend() {
-    if (cansend) {
-      if (!sendbuf.isEmpty()) USART1->TDR = sendbuf.pop();
-      cansend = false;
     }
   }
   void print(char *t, ...) {
@@ -106,9 +96,10 @@ class Uart {
     va_start(st, t);
     int len = vsprintf(buf, t, st);
     for (int i = 0; i < len; i++) {
+      USART1->CR1 &= ~(USART_CR1_TXEIE);
       sendbuf.append(buf[i]);
+      USART1->CR1 |= USART_CR1_TXEIE;
     }
-    USART1->CR1 |= USART_CR1_TXEIE;
     va_end(st);
   }
 
@@ -119,7 +110,7 @@ class Uart {
   }
 
   Gpio Rx, Tx;
-  RingBuffer<500> sendbuf;
+  RingBuffer<100> sendbuf;
   RingBuffer<500> recvbuf;
   bool cansend = false;
 };
